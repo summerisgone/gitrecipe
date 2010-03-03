@@ -11,13 +11,13 @@ in configuration. You can use recipe like this: ::
     
     [data]
     recipe = gitrecipe
-    url = git://example.com/my-git-repo.git
+    repository = git://example.com/my-git-repo.git
     rev = origin/redevlop-branch
 
 Options
 -------
 
-*url* - repository url
+*repository* - repository url
 
 *rev* - git reference_ wich you want to checkout 
 
@@ -46,7 +46,7 @@ And buildout config: ::
     
     [data]
     recipe = gitrecipe
-    url = git://example.com/my-git-repo.git
+    repository = git://example.com/my-git-repo.git
 
 
 About

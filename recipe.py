@@ -7,9 +7,9 @@ class GitRecipe(object):
     def __init__(self, buildout, name, options):
         self.options, self.buildout = options, buildout
 
-        if 'url' not in self.options:
+        if 'repository' not in self.options:
             raise zc.buildout.UserError('Repository url must be provided')
-        self.url = options['url']
+        self.url = options['repository']
 
         # determine repository name
         repo_path = self.url.rsplit('/', 1)[1]
