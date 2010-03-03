@@ -12,6 +12,14 @@ in configuration. You can use recipe like this: ::
     [data]
     recipe = gitrecipe
     url = git://example.com/my-git-repo.git
+    rev = origin/redevlop-branch
+
+Options
+-------
+
+*url* - repository url
+
+*rev* - git reference_ wich you want to checkout 
 
 Note
 ````
@@ -46,10 +54,11 @@ About
 
 I've used recipe ``zerokspot.recipe.git``, but as for me, it too complex and has some disadvantages:
 
-- it does not allow commit from the source folder
-- it does not allow to specify the tag or branch of the repository, only revision
+- it does not allow commit from the source folder, default remote is local copy in downloads
+- it does not allow to specify the tag or branch of the repository, only revision hash
 
-So I wrote my own git recipe. You can choose this or that.
+So I wrote my own git recipe with compatible options. You can choose this or that.
 
 
-.. _PYPI: http://pypi.python.org/pypi 
+.. _PYPI: http://pypi.python.org/pypi
+.. _reference: http://book.git-scm.com/7_git_references.html 
