@@ -19,7 +19,10 @@ Options
 
 *repository* - repository url
 
-*rev* - git reference_ wich you want to checkout 
+*ref* of *rev* - git reference_ wich you want to checkout
+
+\*Note:* rev option leaved for compatibility with zerokspot.recipe.git.
+It is better to use *ref* parameter, because it corresponds Git terminology\
 
 Note
 ````

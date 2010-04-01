@@ -10,13 +10,17 @@ class GitRecipe(object):
         if 'repository' not in self.options:
             raise zc.buildout.UserError('Repository url must be provided')
         self.url = options['repository']
+        # ref option overrides rev
+        if 'rev' in options:
+            self.ref = options.get('rev', 'origin/master')
+        if 'ref' in options:
+            self.ref = options.get('ref', 'origin/master')
 
         # determine repository name
         repo_path = self.url.rsplit('/', 1)[1]
         if '.git' in repo_path:
             repo_path = repo_path.rsplit('.git', 1)[0]
-        self.repo_path = os.path.join(buildout['buildout']['parts-directory'], repo_path)
-        return super(GitRecipe, self).__init__()
+        self.options['location'] = os.path.join(buildout['buildout']['parts-directory'], repo_path)
 
     def git(self, operation, args):
         command = ['git'] + [operation] + ['-q'] + args
@@ -34,28 +38,29 @@ class GitRecipe(object):
             self.git('clone', [self.url, ])
             # if revision is given, checkout to revision 
             if 'rev' in self.options:
-                os.chdir(self.repo_path)
-                self.git('checkout', [self.options['rev'], ])
+                os.chdir(self.options['location'])
+                self.git('checkout', [self.ref, ])
         except zc.buildout.UserError:
             # should manually delete files because buildout thinks that no files created
             from shutil import rmtree
-            rmtree(self.repo_path)
+            rmtree(self.options['location'])
             raise
 
         # return to root directory
         os.chdir(self.buildout['buildout']['directory'])
 
-        return self.repo_path
+        return self.options['location']
 
     def update(self):
         '''Update repository rather than download it again'''
         # go to parts directory
-        os.chdir(self.repo_path)
+        os.chdir(self.options['location'])
         self.git('fetch', ['origin', ])
         # if revision is given, checkout to revision 
         if 'rev' in self.options:
-            self.git('checkout', [self.options['rev'], ])
+            self.git('checkout', [self.ref, ])
         # return to root directory
         os.chdir(self.buildout['buildout']['directory'])
 
-        return self.repo_path
+        return self.options['location']
+
