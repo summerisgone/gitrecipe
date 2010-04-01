@@ -21,35 +21,11 @@ Options
 
 *ref* of *rev* - git reference_ wich you want to checkout
 
-\*Note:* rev option leaved for compatibility with zerokspot.recipe.git.
+Notes
+`````
+
+*rev* option leaved for compatibility with ``zerokspot.recipe.git``.
 It is better to use *ref* parameter, because it corresponds Git terminology\
-
-Note
-````
-
-\While I haven't uploaded recipe to PYPI_ you should 
-put code into some directory and add tell zc.buildout treat this path as develop eggs dir. 
-For example: \ 
-
-Directory structure: ::
-
-    ~/myproject/
-        bootstrap.py
-        buildout.cfg
-        gitrecipe/
-            README.rst
-            recipe.py
-            setup.py
-
-And buildout config: ::
-
-    [buildout]
-    develop = gitrecipe
-    parts = data
-    
-    [data]
-    recipe = gitrecipe
-    repository = git://example.com/my-git-repo.git
 
 
 About
