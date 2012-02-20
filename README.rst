@@ -25,7 +25,11 @@ Notes
 `````
 
 *rev* option leaved for compatibility with ``zerokspot.recipe.git``.
-It is better to use *ref* parameter, because it corresponds Git terminology\
+It is better to use *ref* parameter, because it corresponds Git terminology
+
+Since 0.0.2 recipe do check existing repository while install and update.
+Repository origin url must be the same as given in **rev** option.
+Otherwise repository will be deleted and cloned again.
 
 
 About

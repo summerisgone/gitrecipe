@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import logging, os, zc.buildout, subprocess
+import logging, os, zc.buildout, subprocess, re, shutil
 
 
 class GitRecipe(object):
@@ -17,16 +17,39 @@ class GitRecipe(object):
             self.ref = options.get('ref', 'origin/master')
 
         # determine repository name
-        repo_path = self.url.rsplit('/', 1)[1]
-        if '.git' in repo_path:
-            repo_path = repo_path.rsplit('.git', 1)[0]
-        self.options['location'] = os.path.join(buildout['buildout']['parts-directory'], repo_path)
+        match = re.search('\/(?P<repo_name>[a-zA-Z0-9-]*)(.git)?$', self.url)
+        if match:
+            repo_name = match.groupdict()['repo_name']
+            self.repo_path = os.path.join(self.buildout['buildout']['parts-directory'], repo_name)
+        else:
+            raise zc.buildout.UserError('Can not find repository name')
+        self.options['location'] = os.path.join(buildout['buildout']['parts-directory'], self.repo_path)
 
-    def git(self, operation, args):
-        command = ['git'] + [operation] + ['-q'] + args
-        status = subprocess.call(' '.join(command), shell=True)
-        if status != 0:
+    def git(self, operation, args, quiet=True):
+        if quiet:
+            command = ['git'] + [operation] + ['-q'] + args
+        else:
+            command = ['git'] + [operation] + args
+
+        proc = subprocess.Popen(' '.join(command), shell=True, stdout=subprocess.PIPE)
+        status = proc.wait()
+        if status:
             raise zc.buildout.UserError('Error while executing %s' % ' '.join(command))
+        return proc.stdout.read()
+
+    def check_same(self):
+        old_cwd = os.getcwd()
+        existing_repository = None
+
+        if os.path.exists(self.repo_path) and os.path.exists(os.path.join(self.repo_path, '.git')):
+            os.chdir(self.repo_path)
+            origin = self.git('remote', ['show', 'origin'], quiet=False)
+            existing_repository = re.findall('^\s*Fetch URL:\s*(.*)$', origin, flags=re.MULTILINE)[0]
+
+        os.chdir(old_cwd)
+        if existing_repository == self.url:
+            return True
+        else:
 
     def install(self):
         '''Clone repository and checkout to version'''
@@ -34,33 +57,54 @@ class GitRecipe(object):
         os.chdir(self.buildout['buildout']['parts-directory'])
 
         try:
-            # first, fetch code from remote repository
+
+            if os.path.exists(self.repo_path):
+                if self.check_same():
+                    # If the same repository is here, just fetch new data and checkout to revision
+                    # aka update ;)
+                    os.chdir(self.repo_path)
+                    self.git('fetch', [self.url, ])
+                    if 'rev' in self.options:
+                        os.chdir(self.options['location'])
+                        self.git('checkout', [self.ref, ])
+                        # return to root directory
+                        os.chdir(self.buildout['buildout']['directory'])
+                        return self.options['location']
+
+                else:
+                    # if repository exists but not the same, delete all files there
+                    shutil.rmtree(self.repo_path, ignore_errors=True)
+
+            # in fact, the install
+            os.chdir(self.buildout['buildout']['parts-directory'])
             self.git('clone', [self.url, ])
             # if revision is given, checkout to revision 
             if 'rev' in self.options:
                 os.chdir(self.options['location'])
                 self.git('checkout', [self.ref, ])
+
         except zc.buildout.UserError:
-            # should manually delete files because buildout thinks that no files created
-            from shutil import rmtree
-            rmtree(self.options['location'])
+            # should manually clean files because buildout thinks that no files created
+            shutil.rmtree(self.options['location'])
             raise
 
         # return to root directory
         os.chdir(self.buildout['buildout']['directory'])
-
         return self.options['location']
 
     def update(self):
         '''Update repository rather than download it again'''
         # go to parts directory
-        os.chdir(self.options['location'])
-        self.git('fetch', ['origin', ])
-        # if revision is given, checkout to revision 
-        if 'rev' in self.options:
-            self.git('checkout', [self.ref, ])
+        if self.check_same():
+            os.chdir(self.options['location'])
+            self.git('fetch', ['origin', ])
+            # if revision is given, checkout to revision
+            if 'rev' in self.options:
+                self.git('checkout', [self.ref, ])
+        else:
+            self.install()
+
         # return to root directory
         os.chdir(self.buildout['buildout']['directory'])
-
         return self.options['location']
 
