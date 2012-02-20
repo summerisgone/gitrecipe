@@ -49,7 +49,6 @@ class GitRecipe(object):
         os.chdir(old_cwd)
         if existing_repository == self.url:
             return True
-        else:
 
     def install(self):
         '''Clone repository and checkout to version'''
